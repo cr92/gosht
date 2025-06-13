@@ -10,7 +10,7 @@ type File struct {
 	Path string
 }
 
-func (f *File) ReadLine(dest chan string, done chan bool) {
+func (f *File) ReadLine(dest chan string) {
 	file, err := os.Open(f.Path)
 	if err != nil {
 		log.Fatal("Opening file failed")
@@ -21,5 +21,5 @@ func (f *File) ReadLine(dest chan string, done chan bool) {
 	for scanner.Scan() {
 		dest <- scanner.Text()
 	}
-	done <- true
+	return
 }

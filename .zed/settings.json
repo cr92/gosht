@@ -2,4 +2,15 @@
 //
 // For a full list of overridable settings, and general information on folder-specific settings,
 // see the documentation: https://zed.dev/docs/configuring-zed#settings-files
-{}
+{
+  // "languages": {
+  //   "go": {
+  //     "tab_size": 4,
+  //     "formatter": "gofmt",
+  //     "format_on_save": true,
+  //     "enable_language_server": true,
+  //     "hard_tabs": false,
+  //     "preferred_line_length": 120
+  //   }
+  // }
+}

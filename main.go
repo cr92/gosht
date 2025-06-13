@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"sync"
 	"time"
 
+	"github.com/cr92/gosht/customer"
 	"github.com/cr92/gosht/dataSrc"
 	"github.com/cr92/gosht/file"
 )
@@ -62,7 +64,8 @@ func processLine(ctx context.Context, dest chan string, id int, wg *sync.WaitGro
 				fmt.Printf("Done %d after processing %d entries\n", id, count)
 				return
 			}
-			fmt.Fprintln(f, entry)
+			j, _ := json.MarshalIndent(customer.CreateCustomer(entry), "", "    ")
+			fmt.Fprintln(f, string(j))
 			count++
 		case <-ctx.Done():
 			fmt.Printf("Consumer %d cancelled\n", id)

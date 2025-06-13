@@ -13,17 +13,16 @@ import (
 )
 
 func main() {
-	start := time.Now()
-
 	loadEnv()
 	dataFile := file.File{Path: os.Getenv("DATA")}
-	processData(&dataFile)
 
+	start := time.Now()
+	processData(&dataFile)
 	fmt.Println(time.Since(start))
 }
 
 func processData(ds dataSrc.DataSrc) {
-	ctx, cancel := context.WithTimeout(context.Background(), 470*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 450*time.Millisecond)
 	defer cancel()
 	var wg sync.WaitGroup
 

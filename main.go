@@ -1,27 +1,33 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"time"
 
-	"github.com/joho/godotenv"
+	"github.com/cr92/gosht/dataSrc"
+	"github.com/cr92/gosht/file"
 )
 
 func main() {
 	start := time.Now()
-	err := godotenv.Load()
-	if err != nil {
-		fmt.Println(err)
-	}
-	nc := File{os.Getenv("DATA")}
+
+	loadEnv()
+
+	dataFile := file.File{Path: os.Getenv("DATA")}
+	processData(&dataFile)
+
+	fmt.Println(time.Since(start))
+}
+
+func processData(ds dataSrc.DataSrc) {
 	dest := make(chan string)
-	done := make(chan bool)
-	defer close(done)
 	defer close(dest)
 
-	go nc.Spew(dest, done)
+	done := make(chan bool)
+	defer close(done)
+
+	go ds.ReadLine(dest, done)
 
 	for {
 		select {
@@ -29,30 +35,7 @@ func main() {
 			fmt.Println(m)
 		case <-done:
 			fmt.Println("Done")
-			fmt.Println(time.Since(start))
 			return
 		}
 	}
-}
-
-type File struct {
-	Path string
-}
-
-func (c *File) Spew(dest chan string, done chan bool) {
-	f, e := os.Open(c.Path)
-	if e != nil {
-		fmt.Println(e)
-	}
-	defer f.Close()
-
-	sc := bufio.NewScanner(f)
-	for sc.Scan() {
-		dest <- sc.Text()
-	}
-	done <- true
-}
-
-type C interface {
-	Spew() string
 }

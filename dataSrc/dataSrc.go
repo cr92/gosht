@@ -1,5 +1,7 @@
 package dataSrc
 
+import "context"
+
 type DataSrc interface {
-	ReadLine(dest chan string)
+	ReadLine(ctx context.Context, dest chan string)
 }

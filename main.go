@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -15,7 +16,6 @@ func main() {
 	start := time.Now()
 
 	loadEnv()
-
 	dataFile := file.File{Path: os.Getenv("DATA")}
 	processData(&dataFile)
 
@@ -23,45 +23,51 @@ func main() {
 }
 
 func processData(ds dataSrc.DataSrc) {
+	ctx, cancel := context.WithTimeout(context.Background(), 470*time.Millisecond)
+	defer cancel()
 	var wg sync.WaitGroup
 
 	dest := make(chan string)
 	wg.Add(1)
 	go func() {
-		ds.ReadLine(dest)
+		defer wg.Done()
+		ds.ReadLine(ctx, dest)
 		close(dest)
-		wg.Done()
 	}()
 
 	for i := range 10 {
 		wg.Add(1)
-		go func(dest chan string, id int) {
-			count := 0
-			f, err := os.Create(fmt.Sprintf("batch_%d.csv", id))
-			if err != nil {
-				log.Fatal("Error creating file")
-			}
-			defer func() {
-				err := f.Close()
-				if err != nil {
-					log.Fatal("Error closing file")
-				}
-			}()
-			defer wg.Done()
-
-			for {
-				select {
-				case entry, ok := <-dest:
-					if !ok {
-						fmt.Printf("Done %d after processing %d entries\n", id, count)
-						return
-					}
-					fmt.Fprintln(f, entry)
-					count++
-				}
-			}
-		}(dest, i)
+		go processLine(ctx, dest, i, &wg)
 	}
-
 	wg.Wait()
+}
+
+func processLine(ctx context.Context, dest chan string, id int, wg *sync.WaitGroup) {
+	defer wg.Done()
+	count := 0
+	f, err := os.Create(fmt.Sprintf("batch_%d.csv", id))
+	if err != nil {
+		log.Fatal("Error creating file")
+	}
+	defer func() {
+		err := f.Close()
+		if err != nil {
+			log.Fatal("Error closing file")
+		}
+	}()
+
+	for {
+		select {
+		case entry, ok := <-dest:
+			if !ok {
+				fmt.Printf("Done %d after processing %d entries\n", id, count)
+				return
+			}
+			fmt.Fprintln(f, entry)
+			count++
+		case <-ctx.Done():
+			fmt.Printf("Consumer %d cancelled\n", id)
+			return
+		}
+	}
 }
